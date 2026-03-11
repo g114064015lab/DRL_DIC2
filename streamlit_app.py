@@ -8,23 +8,40 @@ st.set_page_config(page_title="RL Grid Map Solver", layout="wide")
 # CSS Styling to make the Grid look like a map
 st.markdown("""
 <style>
-div[data-testid="column"] {
+/* Center the grid container and restrict its max-width so columns don't stretch */
+[data-testid="stVerticalBlock"] > [style*="flex-direction: column;"] > [data-testid="stVerticalBlock"] {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Override column gaps */
+[data-testid="column"] {
+    width: 60px !important;
+    min-width: 60px !important;
+    flex: none !important;
+    padding: 0 !important;
     display: flex;
     justify-content: center;
     align-items: center;
 }
-div.stButton > button {
+
+/* Fix grid button sizes and margins but target only the columns, not sidebar/main buttons */
+[data-testid="column"] div.stButton > button {
     width: 60px;
     height: 60px;
-    margin: 0px !important;
-    font-size: 16px;
+    margin: 2px !important;
+    font-size: 18px;
     font-weight: bold;
     border-radius: 4px;
-    border: 1px solid #ccc;
+    border: 1px solid #c0c0c0;
+    padding: 0;
 }
-/* Style overrides based on markdown labels rendered on button text if possible, 
-   but Streamlit buttons don't easily accept color injections from label natively without hacks. 
-   We will just rely on emojis to indicate state clearly. */
+
+/* Value & Policy Matrix Table container styling */
+[data-testid="stDataFrame"] {
+    width: 100%;
+    margin: 0 auto;
+}
 </style>
 """, unsafe_allow_html=True)
 
