@@ -1,5 +1,5 @@
 import streamlit as st
-from rl_solver import evaluate_policy
+from rl_solver import evaluate_policy, value_iteration
 import pandas as pd
 
 # Basic page setup
@@ -66,6 +66,8 @@ if 'value_matrix' not in st.session_state:
     st.session_state.value_matrix = None
 if 'policy_matrix' not in st.session_state:
     st.session_state.policy_matrix = None
+if 'optimal_path' not in st.session_state:
+    st.session_state.optimal_path = None
 
 # Sidebar Controls
 with st.sidebar:
@@ -151,9 +153,9 @@ for row in range(n):
 st.write("---")
 
 if st.session_state.phase >= 2: # Can solve even if max obstacles not reached yet
-    if st.button("🚀 Solve RL Policy", type="primary"):
-        with st.spinner("Running Iterative Policy Evaluation..."):
-            result = evaluate_policy(
+    if st.button("🚀 Solve Value Iteration", type="primary"):
+        with st.spinner("Running Value Iteration..."):
+            result = value_iteration(
                 n=st.session_state.n,
                 start_id=st.session_state.start_id,
                 end_id=st.session_state.end_id,
@@ -161,6 +163,7 @@ if st.session_state.phase >= 2: # Can solve even if max obstacles not reached ye
             )
             st.session_state.value_matrix = result['value_matrix']
             st.session_state.policy_matrix = result['policy_matrix']
+            st.session_state.optimal_path = result['optimal_path']
             st.session_state.rl_computed = True
 
 if st.session_state.rl_computed:
@@ -180,6 +183,31 @@ if st.session_state.rl_computed:
     with col_p:
         st.subheader("Policy Matrix $\pi(s)$")
         df_p = pd.DataFrame(st.session_state.policy_matrix)
-        styled_p = df_p.style.applymap(lambda v: 'background-color: #64748b; color: white' if v == 'OBS' else 
-                                               ('background-color: #ef4444; color: white' if v == 'END' else ''))
+        
+        # Highlighting the optimal path
+        n = st.session_state.n
+        optimal_path = st.session_state.optimal_path
+        
+        def style_policy(v, props):
+            return props
+            
+        def apply_styling(df):
+            styles = pd.DataFrame('', index=df.index, columns=df.columns)
+            for row in range(df.shape[0]):
+                for col in range(df.shape[1]):
+                    s = row * df.shape[1] + col + 1
+                    val = df.iloc[row, col]
+                    if val == 'OBS':
+                        styles.iloc[row, col] = 'background-color: #64748b; color: white'
+                    elif val == 'END':
+                        if optimal_path and s in optimal_path:
+                             # Endpoint can also be in path
+                             styles.iloc[row, col] = 'background-color: #4ade80; color: black; font-weight: bold;'
+                        else:
+                             styles.iloc[row, col] = 'background-color: #ef4444; color: white'
+                    elif optimal_path and s in optimal_path:
+                        styles.iloc[row, col] = 'background-color: #4ade80; color: black; font-weight: bold;'
+            return styles
+            
+        styled_p = df_p.style.apply(apply_styling, axis=None)
         st.dataframe(styled_p, use_container_width=True)
